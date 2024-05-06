@@ -108,6 +108,53 @@ using (var scope = app.Services.CreateScope())
        await userManager.AddToRoleAsync(user, "Admin");
     }
 
+
+    string email2 = "Instr@instr.com";
+    string password2 = "Test1234";
+    string username2 = "Bob";
+
+    if (await userManager.FindByEmailAsync(email2) == null)
+    {
+        var user2 = new IdentityUser();
+        user2.Email = email2;
+        user2.UserName = username2;
+
+        await userManager.CreateAsync(user2, password2);
+
+        await userManager.AddToRoleAsync(user2, "Instructor");
+    }
+
+
+    string email3 = "Judge@Judge.com";
+    string password3 = "Test1234";
+    string username3 = "Judy";
+
+    if (await userManager.FindByEmailAsync(email3) == null)
+    {
+        var user3 = new IdentityUser();
+        user3.Email = email3;
+        user3.UserName = username3;
+
+        await userManager.CreateAsync(user3, password3);
+
+        await userManager.AddToRoleAsync(user3, "Judge");
+    }
+
+    string email4 = "Doglover@Handler.com";
+    string password4 = "Test1234";
+    string username4 = "Kim";
+
+    if (await userManager.FindByEmailAsync(email4) == null)
+    {
+        var user4 = new IdentityUser();
+        user4.Email = email4;
+        user4.UserName = username4;
+
+        await userManager.CreateAsync(user4, password4);
+
+        await userManager.AddToRoleAsync(user4, "Handler");
+    }
+
 }
 
 
