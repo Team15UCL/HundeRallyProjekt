@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HundeRallyIdentity.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class UserController : Controller
     {
         private readonly UserManager<IdentityUser> _userManager;
@@ -18,8 +19,6 @@ namespace HundeRallyIdentity.Controllers
             _userManager = usermanager;
             _context = context;
         }
-
-        [Authorize(Roles="Admin")]
 
         public async Task<IActionResult> UserList()
         {

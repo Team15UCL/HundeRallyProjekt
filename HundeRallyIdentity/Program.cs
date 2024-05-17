@@ -122,6 +122,7 @@ using (var scope = app.Services.CreateScope())
         await userManager.CreateAsync(user2, password2);
 
         await userManager.AddToRoleAsync(user2, "Instructor");
+        await userManager.AddClaimAsync(user2, new System.Security.Claims.Claim("userName", "Bob"));
     }
 
 

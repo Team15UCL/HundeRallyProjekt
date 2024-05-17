@@ -1,0 +1,143 @@
+﻿@model List<HundeRallyIdentity.Models.Exercise>;
+
+@{
+	Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Rally Bane</title>
+
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+	<link rel="stylesheet" href="/css/style.css" />
+
+	<script src="/konva/konva.min.js"></script>
+	<script src="/axios/dist/axios.min.js"></script>
+</head>
+<body style="background-color:hsl(200, 50%, 40%);font-family:Figtree">
+	<button onclick="showGuide()" id="guidebt" class="trackbtn">Vis Guide</button>
+	<div id="stage-parent">
+		<div id="leftlist" class="track">
+			<h4>Guide:</h4>
+			<p>Træk øvelserne fra højre ind på banen for at tilføje</p>
+			<p>Dobbelklik på banen for at tilføje en pil</p>
+			<p>Alle objekter kan roteres ved at klikke på dem</p>
+			<p>Slet et objekt ved brug af højrekliks menuen</p>
+			<hr />
+			<p>Gem den nuværende bane med denne knap:</p>
+			<input type="text" placeholder="Vælg navn" id="postName" />
+			<button class="my-2 trackbtn" onclick="saveTrack()">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-floppy" viewBox="0 0 16 16">
+					<path d="M11 2H9v3h2z" />
+					<path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z" />
+				</svg>
+				Gem bane
+			</button>
+			<p>Hent en bane ved at søge efter navn:</p>
+			<input type="text" placeholder="Søg efter navn" id="getName" />
+			<button class="my-2 trackbtn" onclick="fetchTrack()">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+					<path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
+					<path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
+				</svg>
+				Hent Bane
+			</button>
+		</div>
+		<div class="track" id="bane">
+		</div>
+
+		<div id="rightlist" class="track">
+			<div id="exercises" class="grid-container">
+				<div>
+					<h3>Start & Mål</h3>
+					<img class="exercise" id="startfinish" src="/Images/Start.png" height="52,5" width="75" draggable="true" />
+					<img class="exercise" id="startfinish" src="/Images/Finish.png" height="52,5" width="75" draggable="true" />
+					@foreach (var item in Model.DistinctBy(x => x.Class))
+					{	
+						<hr />
+						<h3 class="">
+							@item.Class[0].ToString().ToUpper()@item.Class.Substring(1) klasse
+						</h3>
+						<div class="accordion-container">
+							@foreach (var obj in Model.Where(x => x.Class == item.Class))
+							{
+								switch (obj.Class)
+								{
+									case "begynder":
+										<img class="exercise" id="exercise1" src="@Html.DisplayFor(x => obj.Url)" height="52,5" width="75" draggable="true" />
+										break;
+
+									case "øvet":
+										<img class="exercise" id="exercise2" src="@Html.DisplayFor(x => obj.Url)" height="52,5" width="75" draggable="true" />
+										break;
+
+									case "ekspert":
+										<img class="exercise" id="exercise3" src="@Html.DisplayFor(x => obj.Url)" height="52,5" width="75" draggable="true" />
+										break;
+
+									case "champion":
+										<img class="exercise" id="exercise4" src="@Html.DisplayFor(x => obj.Url)" height="52,5" width="75" draggable="true" />
+										break;
+
+									default:
+										<img class="exercise" src="@Html.DisplayFor(x => obj.Url)" height="52,5" width="75" draggable="true" />
+										break;
+								}
+							}
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="routeCounter" id="route"></div>
+
+
+	@* Menu til contextmenu på øvelser *@
+	<div id="menu">
+		<div>
+			<div class="btnRow">
+				<button id="up-button">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-dash-square" viewBox="0 0 16 16">
+						<path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z" />
+						<path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8" />
+					</svg>
+				</button>
+				<button id="down-button">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-square" viewBox="0 0 16 16">
+						<path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z" />
+						<path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+					</svg>
+				</button>
+			</div>
+			<button id="info-button">Info</button>
+			<button id="delete-button">Slet</button>
+		</div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+	<script type="text/javascript">
+		const myVar = @Html.Raw(Json.Serialize(Model));
+		const userName = "@ViewBag.UserName";
+		const userRole = "@ViewBag.UserRole";
+		function showGuide() {
+			var list = document.getElementById("leftlist");
+			if (list.style.visibility === "visible") {
+				list.style.visibility = "hidden";
+			} else {
+				list.style.visibility = "visible";
+			}
+		};
+	</script>
+	<script src="/js/RallyTrack.js"></script>
+</body>
+</html>
