@@ -77,12 +77,12 @@ using (var scope = app.Services.CreateScope()) //To access the services we have 
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-    var roles = new[] { "Admin", "Instructor","Judge", "Handler"};
+    var roles = new[] { "Admin", "Instructor", "Judge", "Handler" };
 
-    foreach (var role in roles) 
+    foreach (var role in roles)
     {
-        
-        if(!await roleManager.RoleExistsAsync(role)) //Check if the role already exists
+
+        if (!await roleManager.RoleExistsAsync(role)) //Check if the role already exists
             await roleManager.CreateAsync(new IdentityRole(role)); // if not, create it
 
     }
@@ -105,11 +105,11 @@ using (var scope = app.Services.CreateScope())
 
         await userManager.CreateAsync(user, password);
 
-       await userManager.AddToRoleAsync(user, "Admin");
+        await userManager.AddToRoleAsync(user, "Admin");
     }
 
 
-    string email2 = "Instr@instr.com";
+    string email2 = "instr@instr.com";
     string password2 = "Test1234";
     string username2 = "Bob";
 
@@ -126,7 +126,7 @@ using (var scope = app.Services.CreateScope())
     }
 
 
-    string email3 = "Judge@Judge.com";
+    string email3 = "judge@Judge.com";
     string password3 = "Test1234";
     string username3 = "Judy";
 
@@ -141,7 +141,7 @@ using (var scope = app.Services.CreateScope())
         await userManager.AddToRoleAsync(user3, "Judge");
     }
 
-    string email4 = "Doglover@Handler.com";
+    string email4 = "doglover@handler.com";
     string password4 = "Test1234";
     string username4 = "Kim";
 

@@ -1,4 +1,5 @@
 ﻿using HundeRallyIdentity.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,10 +8,11 @@ using System.Security.Claims;
 
 namespace HundeRallyIdentity.Controllers
 {
+    [Authorize]
     public class TrackController : Controller
     {
         private readonly UserManager<IdentityUser> _userManager;
-        
+
         public TrackController(UserManager<IdentityUser> usermanager)
         {
             _userManager = usermanager;
@@ -26,7 +28,7 @@ namespace HundeRallyIdentity.Controllers
             ViewBag.UserRole = User.FindFirst(ClaimTypes.Role).Value;
             var filter = Builders<Exercise>.Filter.Empty;
             var nodes = db.Find(filter).ToList().OrderBy(x => x.Number).ToList();
-            
+
             return View(nodes);
         }
     }
