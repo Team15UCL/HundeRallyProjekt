@@ -5,7 +5,6 @@ var track = [];
 var exerciseRoute = [];
 var itemUrl = "";
 var itemColor = "";
-console.log({userName,userRole});
 
 //
 // Initialize a Konva Stage on the DOM using the div element with id: "bane"
@@ -22,6 +21,9 @@ var stage = new Konva.Stage({
 var backgroundLayer = new Konva.Layer({
 	name: "backgroundLayer",
 });
+var connectorLayer = new Konva.Layer({
+	name: "connectorLayer",
+});
 var trackLayer = new Konva.Layer({
 	name: "trackLayer",
 });
@@ -32,6 +34,7 @@ var tooltipLayer = new Konva.Layer({
 	name: "tooltipLayer",
 });
 stage.add(backgroundLayer);
+stage.add(connectorLayer);
 stage.add(trackLayer);
 stage.add(tooltipLayer);
 stage.add(transformLayer);
@@ -92,121 +95,128 @@ con.addEventListener("dragover", (e) => {
 con.addEventListener("drop", (e) => {
 	e.preventDefault();
 	stage.setPointersPositions(e);
-	createNode(itemUrl, stage.getPointerPosition(), itemColor);
+	createNode(itemUrl, stage.getPointerPosition(), 0, itemColor);
 });
 //#endregion
 
 //
 // Function for creating exercise objects on stage
 //
-function createNode(imageUrl, position, borderColor) {
-	Konva.Image.fromURL(imageUrl, (image) => {
-		image.setAttrs({
-			id: imageUrl,
-			width: 90,
-			height: 55,
-			offsetX: 45,
-			offsetY: 27.5,
-			name: "object",
-			stroke: borderColor,
-			strokeWidth: 5,
-			draggable: true,
+function createNode(imageUrl, position, rotation, borderColor) {
+	return new Promise((resolve) => {
+		Konva.Image.fromURL(imageUrl, (image) => {
+			image.setAttrs({
+				id: imageUrl,
+				width: 90,
+				height: 55,
+				offsetX: 45,
+				offsetY: 27.5,
+				name: "object",
+				stroke: borderColor,
+				strokeWidth: 5,
+				draggable: true,
+			});
+
+			image.rotation(rotation);
+			image.position(position);
+
+			// Pass created Node to transformer on creation
+			trImage.nodes([image]);
+
+			image.on("mouseenter", () => {
+				stage.container().style.cursor = "pointer";
+			});
+			image.on("mouseleave", () => {
+				stage.container().style.cursor = "default";
+			});
+
+			//
+			// Make associated labels and connectors move together with the node
+			//
+			if (!imageUrl.includes("Start") && !imageUrl.includes("Finish")) {
+				image.on("dragmove", () => {
+					var routeLabel = stage.findOne("#" + image._id).getParent();
+					var exerciseLabel = stage
+						.findOne("#" + getExerciseNumber(imageUrl) + image._id)
+						.getParent();
+					routeLabel.position({ x: image.x(), y: image.y() });
+					exerciseLabel.position({ x: image.x(), y: image.y() });
+				});
+
+				image.on("transform", () => {
+					var routeLabel = stage.findOne("#" + image._id).getParent();
+					var exerciseLabel = stage
+						.findOne("#" + getExerciseNumber(imageUrl) + image._id)
+						.getParent();
+					routeLabel.rotation(image.rotation());
+					exerciseLabel.rotation(image.rotation());
+				});
+			}
+
+			console.log(getExerciseNumber(image.attrs.id));
+			// pass the node to the route array
+			routeCount(image);
+
+			image.on("dragmove", () => updateConnectors(image)); // Update connector arrows when moving node
+
+			//
+			// Create exercise number and route order labels
+			//
+			if (!imageUrl.includes("Start") && !imageUrl.includes("Finish")) {
+				var routeLabel = new Konva.Label({
+					x: image.getAttr("x"),
+					y: image.getAttr("y"),
+					offset: { x: 50, y: 50 },
+					rotation: image.rotation(),
+				});
+				routeLabel.add(
+					new Konva.Tag({
+						fill: "yellow",
+						stroke: "black",
+						lineJoin: "round",
+						cornerRadius: 5,
+					})
+				);
+				routeLabel.add(
+					new Konva.Text({
+						text: exerciseRoute.length,
+						fontFamily: "Calibri",
+						fontSize: 18,
+						fontStyle: "bold",
+						padding: 5,
+						fill: "black",
+						id: image._id.toString(),
+					})
+				);
+				tooltipLayer.add(routeLabel);
+
+				var exerciseLabel = new Konva.Label({
+					x: image.getAttr("x"),
+					y: image.getAttr("y"),
+					offset: { x: -10, y: 50 },
+					rotation: image.rotation(),
+				});
+				exerciseLabel.add(
+					new Konva.Text({
+						text: getExerciseNumber(imageUrl),
+						fontFamily: "Calibri",
+						fontSize: 18,
+						fontStyle: "bold",
+						padding: 5,
+						fill: "black",
+						id: getExerciseNumber(imageUrl) + image._id,
+					})
+				);
+				tooltipLayer.add(exerciseLabel);
+			}
+
+			trackLayer.add(image);
+
+			// Create connector arrow
+			createConnector();
+
+			resolve(image);
 		});
-
-		image.position(position);
-
-		// Pass created Node to transformer on creation
-		trImage.nodes([image]);
-
-		image.on("mouseenter", () => {
-			stage.container().style.cursor = "pointer";
-		});
-		image.on("mouseleave", () => {
-			stage.container().style.cursor = "default";
-		});
-
-		//
-		// Make associated labels move together with the node
-		//
-		if (!imageUrl.includes("Start") && !imageUrl.includes("Finish")) {
-			image.on("dragmove", () => {
-				var routeLabel = stage.findOne("#" + image._id).getParent();
-				var exerciseLabel = stage
-					.findOne("#" + getExerciseNumber(imageUrl) + image._id)
-					.getParent();
-				routeLabel.position({ x: image.x(), y: image.y() });
-				exerciseLabel.position({ x: image.x(), y: image.y() });
-			});
-
-			image.on("transform", () => {
-				var routeLabel = stage.findOne("#" + image._id).getParent();
-				var exerciseLabel = stage
-					.findOne("#" + getExerciseNumber(imageUrl) + image._id)
-					.getParent();
-				routeLabel.rotation(image.rotation());
-				exerciseLabel.rotation(image.rotation());
-			});
-		}
-
-		image.on("dragmove", () => updateConnectors(image)); // Update connector arrows when moving node
-
-		// pass the node to the route array
-		routeCount(image);
-
-		//
-		// Create exercise number and route order labels
-		//
-		if (!imageUrl.includes("Start") && !imageUrl.includes("Finish")) {
-			var routeLabel = new Konva.Label({
-				x: image.getAttr("x"),
-				y: image.getAttr("y"),
-				offset: { x: 50, y: 50 },
-			});
-			routeLabel.add(
-				new Konva.Tag({
-					fill: "yellow",
-					stroke: "black",
-					lineJoin: "round",
-					cornerRadius: 5,
-				})
-			);
-			routeLabel.add(
-				new Konva.Text({
-					text: exerciseRoute.length,
-					fontFamily: "Calibri",
-					fontSize: 18,
-					fontStyle: "bold",
-					padding: 5,
-					fill: "black",
-					id: image._id.toString(),
-				})
-			);
-			tooltipLayer.add(routeLabel);
-
-			var exerciseLabel = new Konva.Label({
-				x: image.getAttr("x"),
-				y: image.getAttr("y"),
-				offset: { x: -10, y: 50 },
-			});
-			exerciseLabel.add(
-				new Konva.Text({
-					text: getExerciseNumber(imageUrl),
-					fontFamily: "Calibri",
-					fontSize: 18,
-					fontStyle: "bold",
-					padding: 5,
-					fill: "black",
-					id: getExerciseNumber(imageUrl) + image._id,
-				})
-			);
-			tooltipLayer.add(exerciseLabel);
-		}
-
-		trackLayer.add(image);
-
-		// Create connector arrow
-		createConnector();
-		return image;
 	});
 }
 
@@ -277,8 +287,8 @@ stage.on("click tap", function (e) {
 });
 
 var trImage = new Konva.Transformer({
-	rotationSnaps: [0, 90, 180, 270],
-	rotationSnapTolerance: 45,
+	rotationSnaps: [0, 45, 90, 135, 180, 225, 270, 315],
+	rotationSnapTolerance: 22.5,
 	enabledAnchors: [],
 });
 transformLayer.add(trImage);
@@ -307,13 +317,13 @@ stage.on("click tap", function (e) {
 //#region save&load
 
 async function saveTrack() {
-	let name = document.getElementById("postName").value;
+	let userInput = document.getElementById("postName");
+
+	let name = userInput.value;
 	let theme = "Test Bane";
 	let location = "Danmark";
 
-	track = [];
-	let placedExercises = trackLayer.getChildren();
-	placedExercises.map(createExerciseList);
+	exerciseRoute.map(createExerciseList);
 
 	const objectToSend = {
 		name,
@@ -333,6 +343,8 @@ async function saveTrack() {
 		.catch(function (error) {
 			console.log(error);
 		});
+
+	userInput.value = "";
 }
 
 function createExerciseList(item) {
@@ -341,34 +353,47 @@ function createExerciseList(item) {
 		x: item.getAttr("x"),
 		y: item.getAttr("y"),
 		rotation: item.rotation(),
+		stroke: item.stroke(),
 		classname: item.className,
+		routeCount: exerciseRoute.indexOf(item),
 	});
 }
 
 // Function for loading track from db
 async function fetchTrack() {
+	track = [];
+	exerciseRoute = [];
+	connectors = [];
 	trackLayer.destroyChildren();
+	connectorLayer.destroyChildren();
+	tooltipLayer.destroyChildren();
+
 	var name = document.getElementById("getName").value;
 	document.getElementById("getName").value = "";
-	console.log(name);
-	var response = await axios.get(`https://localhost:7213/tracks?name=${name}`);
-	track = response.data.nodes;
+	var response = await axios.get(
+		`https://localhost:7092/track/findone?username=${userName}&userrole=${userRole}&name=${name}`
+	);
+	loadedTrack = response.data.nodes;
+	loadedTrack.sort((a, b) => a.routeCount - b.routeCount);
 
-	track.forEach((item) => {
-		switch (item.className) {
-			case "Image":
-				createNode(item.url, { x: item.x, y: item.y });
-				break;
+	// track.forEach((item) => {
+	// 	createNode(item.url, { x: item.x, y: item.y }, item.rotation, item.stroke);
+	// });
 
-			case "Arrow":
-				var arrow = createArrow({ x: item.x, y: item.y }, item.rotation);
-				arrowCounter++;
-				break;
-
-			default:
-				break;
+	const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+	async function placeNodes(array) {
+		for (const item of array) {
+			await createNode(
+				item.url,
+				{ x: item.x, y: item.y },
+				item.rotation,
+				item.stroke
+			);
+			await new Promise((res) => setTimeout(res, 50));
 		}
-	});
+	}
+
+	placeNodes(loadedTrack);
 }
 
 // function saveTrack() {
@@ -434,7 +459,7 @@ document.getElementById("delete-button").addEventListener("click", () => {
 			)
 			.destroy();
 		updateNumbers();
-		updateConnectors();
+		updateConnectors(currentShape);
 	}
 });
 
@@ -449,19 +474,29 @@ stage.on("click", () => {
 	tooltip.hide();
 });
 
-document.getElementById("down-button").addEventListener("click", () => {
-	var index = exerciseRoute.findIndex((item) => item._id === currentShape._id);
-	var moved = exerciseRoute.splice(index, 1);
-	exerciseRoute.splice(index + 1, 0, moved[0]);
+document.getElementById("up-button").addEventListener("click", () => {
+	if (
+		exerciseRoute.findIndex((item) => item._id === currentShape._id) !=
+		exerciseRoute.length - 1
+	) {
+		var index = exerciseRoute.findIndex(
+			(item) => item._id === currentShape._id
+		);
+		var moved = exerciseRoute.splice(index, 1);
+		exerciseRoute.splice(index + 1, 0, moved[0]);
+		var indexT = track.findIndex((item) => item._id === currentShape._id);
+		var movedT = track.splice(indexT, 1);
+		track.splice(indexT + 1, 0, movedT[0]);
+	}
 
 	buildRoute();
 
-	updateNumbers();
-
 	updateConnectors(currentShape);
+
+	updateNumbers();
 });
 
-document.getElementById("up-button").addEventListener("click", () => {
+document.getElementById("down-button").addEventListener("click", () => {
 	if (exerciseRoute.findIndex((item) => item._id === currentShape._id) != 0) {
 		var index = exerciseRoute.findIndex(
 			(item) => item._id === currentShape._id
@@ -470,11 +505,13 @@ document.getElementById("up-button").addEventListener("click", () => {
 		exerciseRoute.splice(index - 1, 0, moved[0]);
 
 		buildRoute();
+		var indexT = track.findIndex((item) => item._id === currentShape._id);
+		var movedT = track.splice(indexT, 1);
+		track.splice(indexT - 1, 0, movedT[0]);
 	}
+	updateConnectors(currentShape);
 
 	updateNumbers();
-
-	updateConnectors(currentShape);
 });
 
 window.addEventListener("click", () => {
@@ -756,8 +793,11 @@ tooltip.hide();
 
 //#region Route
 function routeCount(exercise) {
-	exerciseRoute.push(exercise);
-
+	if (!exercise.id().includes("Start") && !exercise.id().includes("Finish")) {
+		exerciseRoute.push(exercise);
+	}
+	track.push(exercise);
+	console.log(track);
 	buildRoute();
 }
 
@@ -861,9 +901,9 @@ function createConnector() {
 
 	connectors.push(connector);
 
-	if (exerciseRoute.length != 1) {
-		var sourceNode = exerciseRoute[connector.id() - 1];
-		var targetNode = exerciseRoute[connector.id()];
+	if (track.length != 1) {
+		var sourceNode = track[connector.id() - 1];
+		var targetNode = track[connector.id()];
 
 		const dx = targetNode.x() - sourceNode.x();
 		const dy = targetNode.y() - sourceNode.y();
@@ -879,41 +919,41 @@ function createConnector() {
 
 		connector.points([sourceNodeX, sourceNodeY, targetNodeX, targetNodeY]);
 
-		backgroundLayer.add(connector);
+		connectorLayer.add(connector);
 	}
 }
 
 function updateConnectors(node) {
-	var index = exerciseRoute.findIndex((x) => x._id === node._id);
+	var index = track.findIndex((x) => x._id === node._id);
 	var connectorFrom = connectors[index + 1];
 	var connectorTo = connectors[index];
 
 	const radiusX = 75;
 	const radiusY = 50;
 
-	if (index != exerciseRoute.length - 1) {
-		var dx = exerciseRoute[index + 1].x() - exerciseRoute[index].x();
-		var dy = exerciseRoute[index + 1].y() - exerciseRoute[index].y();
+	if (index != track.length - 1) {
+		var dx = track[index + 1].x() - track[index].x();
+		var dy = track[index + 1].y() - track[index].y();
 		var angle = Math.atan2(-dy, dx);
 
 		connectorFrom.points([
-			exerciseRoute[index].x() + -radiusX * Math.cos(angle + Math.PI),
-			exerciseRoute[index].y() + radiusY * Math.sin(angle + Math.PI),
-			exerciseRoute[index + 1].x() + -radiusX * Math.cos(angle),
-			exerciseRoute[index + 1].y() + radiusY * Math.sin(angle),
+			track[index].x() + -radiusX * Math.cos(angle + Math.PI),
+			track[index].y() + radiusY * Math.sin(angle + Math.PI),
+			track[index + 1].x() + -radiusX * Math.cos(angle),
+			track[index + 1].y() + radiusY * Math.sin(angle),
 		]);
 	}
 
 	if (index > 0) {
-		var dx = exerciseRoute[index].x() - exerciseRoute[index - 1].x();
-		var dy = exerciseRoute[index].y() - exerciseRoute[index - 1].y();
+		var dx = track[index].x() - track[index - 1].x();
+		var dy = track[index].y() - track[index - 1].y();
 		var angle = Math.atan2(-dy, dx);
 
 		connectorTo.points([
-			exerciseRoute[index - 1].x() + -radiusX * Math.cos(angle + Math.PI),
-			exerciseRoute[index - 1].y() + radiusY * Math.sin(angle + Math.PI),
-			exerciseRoute[index].x() + -radiusX * Math.cos(angle),
-			exerciseRoute[index].y() + radiusY * Math.sin(angle),
+			track[index - 1].x() + -radiusX * Math.cos(angle + Math.PI),
+			track[index - 1].y() + radiusY * Math.sin(angle + Math.PI),
+			track[index].x() + -radiusX * Math.cos(angle),
+			track[index].y() + radiusY * Math.sin(angle),
 		]);
 	}
 }
