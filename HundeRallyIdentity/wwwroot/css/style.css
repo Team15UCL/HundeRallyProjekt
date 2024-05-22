@@ -9,6 +9,15 @@
 	transition: border 0.5s ease-out;
 }
 
+.link {
+	color: black;
+	text-decoration: none;
+}
+
+.link:hover {
+	color: white;
+}
+
 #count {
 	font-size: 25px;
 	font-weight: 900;
@@ -47,6 +56,12 @@
 }
 
 #guidebt {
+	position: absolute;
+	top: 10px;
+	left: 75px;
+}
+
+#backbt {
 	position: absolute;
 	top: 10px;
 	left: 75px;

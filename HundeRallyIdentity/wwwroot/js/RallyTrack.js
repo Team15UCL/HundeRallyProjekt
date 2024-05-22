@@ -322,15 +322,27 @@ async function saveTrack() {
 	let name = userInput.value;
 	let theme = "Test Bane";
 	let location = "Danmark";
+	let trackToSend = [];
 
-	exerciseRoute.map(createExerciseList);
+	track.map(createExerciseList);
 
 	const objectToSend = {
 		name,
 		theme,
 		location,
-		nodes: track,
+		nodes: trackToSend,
 	};
+
+	function createExerciseList(item) {
+		trackToSend.push({
+			url: item.getAttr("id"),
+			x: item.getAttr("x"),
+			y: item.getAttr("y"),
+			rotation: item.rotation(),
+			stroke: item.stroke(),
+			classname: item.className,
+		});
+	}
 
 	axios
 		.post(
@@ -339,24 +351,13 @@ async function saveTrack() {
 		)
 		.then(function (response) {
 			console.dir(response.data);
+			alert("Banen er gemt");
 		})
 		.catch(function (error) {
 			console.log(error);
 		});
 
 	userInput.value = "";
-}
-
-function createExerciseList(item) {
-	track.push({
-		url: item.getAttr("id"),
-		x: item.getAttr("x"),
-		y: item.getAttr("y"),
-		rotation: item.rotation(),
-		stroke: item.stroke(),
-		classname: item.className,
-		routeCount: exerciseRoute.indexOf(item),
-	});
 }
 
 // Function for loading track from db
@@ -369,16 +370,20 @@ async function fetchTrack() {
 	tooltipLayer.destroyChildren();
 
 	var name = document.getElementById("getName").value;
-	document.getElementById("getName").value = "";
-	var response = await axios.get(
-		`https://localhost:7092/track/findone?username=${userName}&userrole=${userRole}&name=${name}`
-	);
-	loadedTrack = response.data.nodes;
-	loadedTrack.sort((a, b) => a.routeCount - b.routeCount);
-
-	// track.forEach((item) => {
-	// 	createNode(item.url, { x: item.x, y: item.y }, item.rotation, item.stroke);
-	// });
+	// var response = await axios.get(
+	// 	`https://localhost:7092/track/findone?username=${userName}&userrole=${userRole}&name=${name}`
+	// );
+	// loadedTrack = response.data.nodes;
+	axios
+		.get(
+			`https://localhost:7092/track/findone?username=${userName}&userrole=${userRole}&name=${name}`
+		)
+		.then(function (response) {
+			loadedTrack = response.data.nodes;
+		})
+		.catch(function (error) {
+			alert("Ingen bane fundet");
+		});
 
 	const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 	async function placeNodes(array) {
@@ -394,31 +399,22 @@ async function fetchTrack() {
 	}
 
 	placeNodes(loadedTrack);
+	document.getElementById("getName").value = "";
 }
 
-// function saveTrack() {
-// 	var name = document.getElementById("postName").value;
-// 	document.getElementById("postName").value = "";
-// 	track = [];
-// 	var children = trackLayer.getChildren();
-// 	children.forEach((child) => {
-// 		var id = child.getAttr("id");
-// 		var x = child.getAttr("x");
-// 		var y = child.getAttr("y");
-// 		var rotation = child.rotation();
-// 		var classname = child.className;
-// 		track.push({ url: id, x, y, rotation, classname });
-// 	});
-// 	const trackData = { nodes: track, name };
-// 	axios
-// 		.post("https://localhost:7213/tracks", trackData)
-// 		.then(function (response) {
-// 			console.dir(response.data);
-// 		})
-// 		.catch(function (error) {
-// 			console.log(error);
-// 		});
-// }
+function clearTrack() {
+	track = [];
+	exerciseRoute = [];
+	connectors = [];
+	trackLayer.destroyChildren();
+	connectorLayer.destroyChildren();
+	tooltipLayer.destroyChildren();
+
+	var route = document.getElementById("route");
+	while (route.firstChild) {
+		route.removeChild(route.firstChild);
+	}
+}
 //#endregion
 
 //#region objectMenu
