@@ -96,6 +96,14 @@ con.addEventListener("drop", (e) => {
 	e.preventDefault();
 	stage.setPointersPositions(e);
 	createNode(itemUrl, stage.getPointerPosition(), 0, itemColor);
+	connection.invoke(
+		"NodeCreated",
+		itemUrl,
+		stage.getPointerPosition().x,
+		stage.getPointerPosition().y,
+		0,
+		itemColor
+	);
 });
 //#endregion
 
@@ -157,7 +165,19 @@ function createNode(imageUrl, position, rotation, borderColor) {
 			// pass the node to the route array
 			routeCount(image);
 
-			image.on("dragmove", () => updateConnectors(image)); // Update connector arrows when moving node
+			image.on("dragmove", () => {
+				updateConnectors(image._id);
+			}); // Update connector arrows when moving node
+
+			image.on("dragend", (e) => {
+				connection.invoke(
+					"NodeMoved",
+					image._id,
+					image.id(),
+					image.x(),
+					image.y()
+				);
+			});
 
 			//
 			// Create exercise number and route order labels
@@ -455,7 +475,7 @@ document.getElementById("delete-button").addEventListener("click", () => {
 			)
 			.destroy();
 		updateNumbers();
-		updateConnectors(currentShape);
+		updateConnectors(currentShape._id);
 	}
 });
 
@@ -487,7 +507,7 @@ document.getElementById("up-button").addEventListener("click", () => {
 
 	buildRoute();
 
-	updateConnectors(currentShape);
+	updateConnectors(currentShape._id);
 
 	updateNumbers();
 });
@@ -505,7 +525,7 @@ document.getElementById("down-button").addEventListener("click", () => {
 		var movedT = track.splice(indexT, 1);
 		track.splice(indexT - 1, 0, movedT[0]);
 	}
-	updateConnectors(currentShape);
+	updateConnectors(currentShape._id);
 
 	updateNumbers();
 });
@@ -919,8 +939,8 @@ function createConnector() {
 	}
 }
 
-function updateConnectors(node) {
-	var index = track.findIndex((x) => x._id === node._id);
+function updateConnectors(nodeId) {
+	var index = track.findIndex((x) => x._id === nodeId);
 	var connectorFrom = connectors[index + 1];
 	var connectorTo = connectors[index];
 
@@ -953,3 +973,26 @@ function updateConnectors(node) {
 		]);
 	}
 }
+
+connection.on("NodeCreated", function (url, x, y, rotation, borderColor) {
+	var position = { x, y };
+
+	createNode(url, position, rotation, borderColor).catch(function (err) {
+		return console.error(err.toString());
+	});
+});
+
+connection.on("NodeMoved", function (id, url, x, y) {
+	stage.findOne(`#${url}`).position({ x, y });
+
+	if (!url.includes("Start") && !url.includes("Finish")) {
+		var routeLabel = stage.findOne("#" + id).getParent();
+		var exerciseLabel = stage
+			.findOne("#" + getExerciseNumber(url) + id)
+			.getParent();
+		routeLabel.position({ x, y });
+		exerciseLabel.position({ x, y });
+	}
+
+	updateConnectors(id);
+});
