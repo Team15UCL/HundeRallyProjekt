@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using JWT.Algorithms;
+using JWT.Builder;
+using Microsoft.AspNetCore.Mvc;
 using RallyAPI.Models;
 using RallyAPI.Models.Services;
 
@@ -7,17 +9,37 @@ namespace RallyAPI.Controllers;
 [Route("[Controller]")]
 public class TrackController(TrackService trackService) : ControllerBase
 {
-	[HttpGet("FindOne")]
-	public ActionResult<Track> GetOne(string userName, string userRole, string name = "", string date = "", string location = "", string theme = "")
-	{
-		Track track = trackService.GetOne(userRole, userName, name, date, location, theme);
+	private static readonly string[] secrets = ["team15"];
 
-		if (track != null)
+	[HttpGet("FindOne")]
+	public ActionResult<Track> GetOne(string name = "", string date = "", string location = "", string theme = "")
+	{
+		if (Request.Headers.TryGetValue("Authorization", out var token))
 		{
-			return track;
+			var decodedToken = JwtBuilder.Create()
+				.WithAlgorithm(new HMACSHA256Algorithm())
+				.WithSecret(secrets)
+				.MustVerifySignature()
+				.Decode<IDictionary<string, string>>(token);
+
+			bool a = decodedToken.TryGetValue("UserName", out string userName);
+			bool b = decodedToken.TryGetValue("UserRole", out string userRole);
+
+			if (a && b)
+			{
+				Track track = trackService.GetOne(userRole, userName, name, date, location, theme);
+
+				if (track != null)
+				{
+					return track;
+				}
+			}
+
+			return BadRequest("No Track Found");
 		}
 
-		return BadRequest("No Track Found");
+		return BadRequest("AuthToken not found");
+
 	}
 
 	[HttpGet("FindMany")]
@@ -34,13 +56,30 @@ public class TrackController(TrackService trackService) : ControllerBase
 	}
 
 	[HttpPost(Name = "CreateTrack")]
-	public Track Post(string userName, string userRole, Track track)
+	public ActionResult<Track> Post(Track track)
 	{
-		track.UserClaims.Add(userName);
-		track.RoleClaims.Add(userRole);
-		track.Date = DateTime.Now;
+		if (Request.Headers.TryGetValue("Authorization", out var token))
+		{
+			var decodedToken = JwtBuilder.Create()
+				.WithAlgorithm(new HMACSHA256Algorithm())
+				.WithSecret(secrets)
+				.MustVerifySignature()
+				.Decode<IDictionary<string, string>>(token);
 
-		return trackService.SaveNewTrack(track);
+			bool a = decodedToken.TryGetValue("UserName", out string userName);
+			bool b = decodedToken.TryGetValue("UserRole", out string userRole);
+
+			if (a && b)
+			{
+				track.UserClaims.Add(userName);
+				track.RoleClaims.Add(userRole);
+				track.Date = DateTime.Now;
+
+				return trackService.SaveNewTrack(track);
+			}
+		}
+
+		return BadRequest("AuthToken not found!");
 	}
 
 	[HttpPut(Name = "UpdateTrack")]

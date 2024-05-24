@@ -364,10 +364,9 @@ async function saveTrack() {
 	}
 
 	axios
-		.post(
-			`https://localhost:7092/track?username=${userName}&userrole=${userRole}`,
-			objectToSend
-		)
+		.post(`https://localhost:7092/track`, objectToSend, {
+			headers: { Authorization: token },
+		})
 		.then(function (response) {
 			console.dir(response.data);
 			alert("Banen er gemt");
@@ -391,9 +390,9 @@ async function fetchTrack() {
 	var name = document.getElementById("getName").value;
 
 	await axios
-		.get(
-			`https://localhost:7092/track/findone?username=${userName}&userrole=${userRole}&name=${name}`
-		)
+		.get(`https://localhost:7092/track/findone?name=${name}`, {
+			headers: { Authorization: token },
+		})
 		.then(function (response) {
 			loadedTrack = response.data.nodes;
 		})
@@ -900,6 +899,7 @@ function getExerciseNumber(url) {
 	return url.slice(30, -4);
 }
 
+// #region Connectors
 function createConnector() {
 	var connector = new Konva.Arrow({
 		id: connectors.length,
@@ -967,7 +967,9 @@ function updateConnectors(nodeId) {
 		]);
 	}
 }
+// #endregion
 
+// #region SignalR
 connection.on("NodeCreated", function (url, x, y, rotation, borderColor) {
 	console.log("created");
 	var position = { x, y };
@@ -997,3 +999,4 @@ connection.on("NodeMoved", function (index, x, y) {
 
 	updateConnectors(id);
 });
+// #endregion
