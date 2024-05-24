@@ -1,0 +1,6 @@
+@RallyAPI_HostAddress = http://localhost:5116
+
+GET {{RallyAPI_HostAddress}}/exercise/
+Accept: application/json
+
+###
