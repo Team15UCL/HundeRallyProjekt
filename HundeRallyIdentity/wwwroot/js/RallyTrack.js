@@ -161,23 +161,12 @@ function createNode(imageUrl, position, rotation, borderColor) {
 				});
 			}
 
-			console.log(getExerciseNumber(image.attrs.id));
 			// pass the node to the route array
 			routeCount(image);
 
 			image.on("dragmove", () => {
 				updateConnectors(image._id);
 			}); // Update connector arrows when moving node
-
-			image.on("dragend", (e) => {
-				connection.invoke(
-					"NodeMoved",
-					image._id,
-					image.id(),
-					image.x(),
-					image.y()
-				);
-			});
 
 			//
 			// Create exercise number and route order labels
@@ -229,6 +218,16 @@ function createNode(imageUrl, position, rotation, borderColor) {
 				);
 				tooltipLayer.add(exerciseLabel);
 			}
+
+			image.on("dragmove", () => {
+				let index = track.findIndex((item) => item._id === image._id);
+				connection.invoke(
+					"NodeMoved",
+					index,
+					track[index].position().x,
+					track[index].position().y
+				);
+			});
 
 			trackLayer.add(image);
 
@@ -390,11 +389,8 @@ async function fetchTrack() {
 	tooltipLayer.destroyChildren();
 
 	var name = document.getElementById("getName").value;
-	// var response = await axios.get(
-	// 	`https://localhost:7092/track/findone?username=${userName}&userrole=${userRole}&name=${name}`
-	// );
-	// loadedTrack = response.data.nodes;
-	axios
+
+	await axios
 		.get(
 			`https://localhost:7092/track/findone?username=${userName}&userrole=${userRole}&name=${name}`
 		)
@@ -443,7 +439,6 @@ var menuNode = document.getElementById("menu");
 
 document.getElementById("delete-button").addEventListener("click", () => {
 	if (currentShape.className === "Text") {
-		console.log(currentShape);
 		currentShape.getParent().destroy();
 		return;
 	}
@@ -813,7 +808,6 @@ function routeCount(exercise) {
 		exerciseRoute.push(exercise);
 	}
 	track.push(exercise);
-	console.log(track);
 	buildRoute();
 }
 
@@ -975,6 +969,7 @@ function updateConnectors(nodeId) {
 }
 
 connection.on("NodeCreated", function (url, x, y, rotation, borderColor) {
+	console.log("created");
 	var position = { x, y };
 
 	createNode(url, position, rotation, borderColor).catch(function (err) {
@@ -982,8 +977,14 @@ connection.on("NodeCreated", function (url, x, y, rotation, borderColor) {
 	});
 });
 
-connection.on("NodeMoved", function (id, url, x, y) {
-	stage.findOne(`#${url}`).position({ x, y });
+connection.on("NodeMoved", function (index, x, y) {
+	console.log("moved");
+
+	let movedNode = track[index];
+	let id = movedNode._id;
+	let url = movedNode.id();
+
+	movedNode.position({ x, y });
 
 	if (!url.includes("Start") && !url.includes("Finish")) {
 		var routeLabel = stage.findOne("#" + id).getParent();
