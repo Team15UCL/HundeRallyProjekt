@@ -23,9 +23,6 @@ namespace HundeRallyIdentity.Controllers
 
 		public IActionResult Index()
 		{
-			ViewBag.UserName = User.FindFirst(ClaimTypes.Name)!.Value;
-			ViewBag.UserRole = User.FindFirst(ClaimTypes.Role)!.Value;
-
 			var token = JwtBuilder.Create()
 								  .WithAlgorithm(new HMACSHA256Algorithm())
 								  .WithSecret(secrets)
