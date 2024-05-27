@@ -1,4 +1,4 @@
-﻿using HundeRallyIdentity.Models;
+﻿using HundeRallyWebApp.Models;
 using JWT.Algorithms;
 using JWT.Builder;
 using Microsoft.AspNetCore.Authorization;
@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using System.Security.Claims;
 
-namespace HundeRallyIdentity.Controllers
+namespace HundeRallyWebApp.Controllers
 {
 	[Authorize]
 	public class TrackController : Controller
@@ -23,6 +23,9 @@ namespace HundeRallyIdentity.Controllers
 
 		public IActionResult Index()
 		{
+			ViewBag.UserName = User.FindFirst(ClaimTypes.Name)!.Value;
+			ViewBag.UserRole = User.FindFirst(ClaimTypes.Role)!.Value;
+
 			var token = JwtBuilder.Create()
 								  .WithAlgorithm(new HMACSHA256Algorithm())
 								  .WithSecret(secrets)

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
 
-namespace HundeRallyIdentity.Areas.Identity.Pages.Account
+namespace HundeRallyWebApp.Areas.Identity.Pages.Account
 {
 	public class LoginModel : PageModel
 	{

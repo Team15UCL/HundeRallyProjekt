@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 using System;
 
-namespace HundeRallyIdentity.Data.Migrations
+namespace HundeRallyWebApp.Data.Migrations
 {
     public partial class CreateIdentitySchema : Migration
     {

@@ -1,18 +1,18 @@
 ﻿using MongoDB.Bson;
-namespace HundeRallyIdentity.Models
+namespace HundeRallyWebApp.Models
 {
-    public class Exercise
-    {
+	public class Exercise
+	{
 
-        public ObjectId Id { get; set; }
+		public ObjectId Id { get; set; }
 
-        public string Name { get; set; }
+		public string Name { get; set; }
 
-        public string Class { get; set; }
+		public string Class { get; set; }
 
-        public string Url { get; set; }
+		public string Url { get; set; }
 
-        public int Number => int.Parse(Name[6..]);
+		public int Number => int.Parse(Name[6..]);
 
-    }
+	}
 }

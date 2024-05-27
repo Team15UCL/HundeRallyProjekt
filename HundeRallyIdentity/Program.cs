@@ -1,5 +1,5 @@
-using HundeRallyIdentity.Data;
-using HundeRallyIdentity.Models.Hubs;
+using HundeRallyWebApp.Data;
+using HundeRallyWebApp.Models.Hubs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
