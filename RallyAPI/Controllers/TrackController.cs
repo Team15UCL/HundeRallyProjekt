@@ -12,7 +12,7 @@ public class TrackController(TrackService trackService) : ControllerBase
 	private static readonly string[] secrets = ["team15"];
 
 	[HttpGet("FindOne")]
-	public ActionResult<Track> GetOne(string name = "", string date = "", string location = "", string theme = "")
+	public ActionResult<Track> GetOne(string name, string date = "", string location = "", string theme = "")
 	{
 		if (Request.Headers.TryGetValue("Authorization", out var token))
 		{
@@ -43,16 +43,34 @@ public class TrackController(TrackService trackService) : ControllerBase
 	}
 
 	[HttpGet("FindMany")]
-	public ActionResult<IEnumerable<Track>> GetMany(string userName, string userRole)
+	public ActionResult<IEnumerable<Track>> GetMany()
 	{
-		var tracks = trackService.GetAll(userRole, userName);
-
-		if (tracks != null)
+		if (Request.Headers.TryGetValue("Authorization", out var token))
 		{
-			return tracks.ToList();
+			var decodedToken = JwtBuilder.Create()
+				.WithAlgorithm(new HMACSHA256Algorithm())
+				.WithSecret(secrets)
+				.MustVerifySignature()
+				.Decode<IDictionary<string, string>>(token);
+
+			bool a = decodedToken.TryGetValue("UserName", out string userName);
+			bool b = decodedToken.TryGetValue("UserRole", out string userRole);
+
+			if (a && b)
+			{
+				var tracks = trackService.GetAll(userRole, userName);
+				if (tracks != null)
+				{
+					return tracks.ToList();
+				}
+
+				return BadRequest("No Tracks Found");
+			}
+
+			return BadRequest();
 		}
 
-		return BadRequest("No Tracks Found");
+		return BadRequest();
 	}
 
 	[HttpPost(Name = "CreateTrack")]
@@ -83,27 +101,67 @@ public class TrackController(TrackService trackService) : ControllerBase
 	}
 
 	[HttpPut(Name = "UpdateTrack")]
-	public ActionResult Put(string userName, string userRole, Track track)
+	public ActionResult Put(Track track)
 	{
-		if (track.UserClaims.Contains(userName) || track.RoleClaims.Contains(userRole))
+		if (Request.Headers.TryGetValue("Authorization", out var token))
 		{
-			var updatedTrack = trackService.UpdateTrack(track);
-			return Ok(updatedTrack);
+			var decodedToken = JwtBuilder.Create()
+				.WithAlgorithm(new HMACSHA256Algorithm())
+				.WithSecret(secrets)
+				.MustVerifySignature()
+				.Decode<IDictionary<string, string>>(token);
+
+			bool a = decodedToken.TryGetValue("UserName", out string userName);
+			bool b = decodedToken.TryGetValue("UserRole", out string userRole);
+
+			if (a && b)
+			{
+				if (track.UserClaims.Contains(userName) || track.RoleClaims.Contains(userRole))
+				{
+					var updatedTrack = trackService.UpdateTrack(track);
+					return Ok(updatedTrack);
+				}
+
+				return BadRequest();
+			}
+
+			return BadRequest();
 		}
+
 		return BadRequest();
 	}
 
 	[HttpDelete(Name = "DeleteTrack")]
-	public ActionResult Delete(string userName, string userRole, Track track)
+	public ActionResult Delete(Track track)
 	{
-		if (track.UserClaims.Contains(userName) || track.RoleClaims.Contains(userRole))
+		if (Request.Headers.TryGetValue("Authorization", out var token))
 		{
-			var result = trackService.DeleteTrack(track);
+			var decodedToken = JwtBuilder.Create()
+				.WithAlgorithm(new HMACSHA256Algorithm())
+				.WithSecret(secrets)
+				.MustVerifySignature()
+				.Decode<IDictionary<string, string>>(token);
 
-			if (result == true)
+			bool a = decodedToken.TryGetValue("UserName", out string userName);
+			bool b = decodedToken.TryGetValue("UserRole", out string userRole);
+
+			if (a && b)
 			{
-				return Ok();
+				if (track.UserClaims.Contains(userName) || track.RoleClaims.Contains(userRole))
+				{
+					var result = trackService.DeleteTrack(track);
+
+					if (result == true)
+					{
+						return Ok();
+					}
+
+					return BadRequest();
+				}
+
+				return BadRequest();
 			}
+
 			return BadRequest();
 		}
 
