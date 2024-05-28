@@ -51,7 +51,7 @@ public class TrackService
 
 	public Track UpdateTrack(Track track)
 	{
-		track.Id = _tracks.AsQueryable().Where(t => t.Name == track.Name && t.Date == track.Date).FirstOrDefault()!.Id;
+		track.Id = _tracks.AsQueryable().Where(t => t.Date == track.Date).FirstOrDefault()!.Id;
 
 		var filter = Builders<Track>.Filter.Eq(t => t.Id, track.Id);
 

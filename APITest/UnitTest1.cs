@@ -4,65 +4,97 @@ using RallyAPI.Models.Services;
 
 namespace APITest
 {
-    [TestClass]
-    public class UnitTest1
-    {
-        private readonly TrackService _trackService;
-        private readonly ExerciseService _exerciseService;
+	[TestClass]
+	public class UnitTest1
+	{
+		private readonly TrackService _trackService;
+		private readonly ExerciseService _exerciseService;
 
-        public UnitTest1()
-        {
-            // Initialize dependencies in the constructor
-            var dbTrack = new DbAccess<Track>();
-            var dbExercise = new DbAccess<Exercise>();
-            _trackService = new TrackService(dbTrack);
-            _exerciseService = new ExerciseService(dbExercise);
-        }
+		public UnitTest1()
+		{
+			// Initialize dependencies in the constructor
+			var dbTrack = new DbAccess<Track>();
+			var dbExercise = new DbAccess<Exercise>();
+			_trackService = new TrackService(dbTrack);
+			_exerciseService = new ExerciseService(dbExercise);
+		}
 
-        [TestMethod]
-        public void TestMethod1()
-        {
-            Track NoFoundTrack = _trackService.GetOne("NoRole", "NoUserName", "TrackName");
+		[TestMethod]
+		public void TestNoTrackWithNameInDb()
+		{
+			Track NoFoundTrack = _trackService.GetOne("NoRole", "NoUserName", "WrongTrackName");
 
-            Assert.IsTrue(NoFoundTrack == null);
-        }
+			Assert.IsTrue(NoFoundTrack == null);
+		}
 
-        [TestMethod]
-        public void TestMethod2()
-        {
-            Track FoundTrack = _trackService.GetOne(userRole: "Instructor", "Aske", "awesome");
+		[TestMethod]
+		public void TestGettingTrackFromDb()
+		{
+			string SearchName = "test0";
+			string UserName = "Bob";
+			string UserRole = "Instructor";
 
-            Assert.IsTrue(FoundTrack != null);
-            Assert.AreEqual(FoundTrack.Name, "awesome");
-        }
+			Track FoundTrack = _trackService.GetOne(UserRole, UserName, SearchName);
 
-        [TestMethod]
-        public void TestMethod3()
-        {
-            Track TrackToBeDeleted = _trackService.GetOne(userRole: "Instructor", "Aske", "awesome");
+			Assert.IsTrue(FoundTrack != null);
+			Assert.AreEqual(FoundTrack.Name, SearchName);
+			Assert.IsTrue(FoundTrack.UserClaims.Contains(UserName));
+			Assert.IsTrue(FoundTrack.RoleClaims.Contains(UserRole));
+		}
 
-            _trackService.DeleteTrack(TrackToBeDeleted);
+		[TestMethod]
+		public void TestDeletingAndCreatingTrackInDb()
+		{
+			string SearchName = "test0";
+			string UserName = "Bob";
+			string UserRole = "Instructor";
 
-            Track NoFoundTrack = _trackService.GetOne(userRole: "Instructor", "Aske", "awesome");
+			Track TrackToBeDeleted = _trackService.GetOne(UserRole, UserName, SearchName);
 
-            Assert.IsTrue(NoFoundTrack == null);
+			_trackService.DeleteTrack(TrackToBeDeleted);
 
-            _trackService.SaveNewTrack(TrackToBeDeleted);
+			Track NoFoundTrack = _trackService.GetOne(UserRole, UserName, SearchName);
 
-            Track FoundTrack = _trackService.GetOne(userRole: "Instructor", "Aske", "awesome");
+			Assert.IsTrue(NoFoundTrack == null);
 
-            Assert.AreEqual(FoundTrack.Name, TrackToBeDeleted.Name);
-            Assert.AreEqual(FoundTrack.Date, TrackToBeDeleted.Date);
+			_trackService.SaveNewTrack(TrackToBeDeleted);
 
-        }
+			Track FoundTrack = _trackService.GetOne(UserRole, UserName, SearchName);
 
-        [TestMethod]
-        public void TestMethod4()
-        {
-            var exercises = _exerciseService.GetAllExercises();
+			Assert.AreEqual(FoundTrack.Name, TrackToBeDeleted.Name);
+			Assert.AreEqual(FoundTrack.Date, TrackToBeDeleted.Date);
+		}
 
-            Assert.IsTrue(exercises != null);
-            Assert.IsTrue(exercises.Any(e => e.Name == "Øvelse3"));
-        }
-    }
+		[TestMethod]
+		public void TestUpdateTrackNameInDb()
+		{
+			string SearchName = "test0";
+			string UserName = "Bob";
+			string UserRole = "Instructor";
+
+			Track TrackToBeUpdated = _trackService.GetOne(UserRole, UserName, SearchName);
+
+			TrackToBeUpdated.Name = "ændret";
+
+			_trackService.UpdateTrack(TrackToBeUpdated);
+
+			Track UpdatedTrackFromDb = _trackService.GetOne(UserRole, UserName, TrackToBeUpdated.Name);
+			Assert.AreEqual(UpdatedTrackFromDb.Name, "ændret");
+			Assert.AreEqual(UpdatedTrackFromDb.Id, TrackToBeUpdated.Id);
+
+			TrackToBeUpdated.Name = SearchName;
+
+			Track RevertedTrack = _trackService.UpdateTrack(TrackToBeUpdated);
+			Assert.AreEqual(RevertedTrack.Name, SearchName);
+		}
+
+		[TestMethod]
+		public void TestGetAllExercisesFromDb()
+		{
+			var exercises = _exerciseService.GetAllExercises();
+
+			Assert.IsTrue(exercises != null);
+			Assert.IsTrue(exercises.Any(e => e.Name == "Øvelse3"));
+		}
+	}
 }
