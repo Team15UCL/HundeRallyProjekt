@@ -11,7 +11,8 @@ Projektet består primært af 3 dele:
 
 ## Arkitektur
 
-Overordnet er projektet et distribueret system, da web app'en og api'en kan ligge på forskellige computere og forbindes via netværk
+Overordnet er projektet et distribueret system, da web app'en og api'en kan ligge på forskellige computere og forbindes via netværk og der bruges en client-server arkitektur.
+
 De er begge bygget op med en MVC struktur
 
 ## Features
