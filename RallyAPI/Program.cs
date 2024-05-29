@@ -1,4 +1,3 @@
-
 using RallyAPI.Data;
 using RallyAPI.Models.Services;
 
