@@ -365,7 +365,7 @@ async function saveTrack() {
 
 	axios
 		.post(`https://localhost:7092/track`, objectToSend, {
-			headers: { Authorization: token },
+			headers: { Authorization: "Bearer " + token },
 		})
 		.then(function (response) {
 			console.dir(response.data);
@@ -391,7 +391,7 @@ async function fetchTrack() {
 
 	await axios
 		.get(`https://localhost:7092/track/findone?name=${name}`, {
-			headers: { Authorization: token },
+			headers: { Authorization: "Bearer " + token },
 		})
 		.then(function (response) {
 			loadedTrack = response.data.nodes;

@@ -11,16 +11,26 @@ public class TrackController(TrackService trackService) : ControllerBase
 {
 	private static readonly string[] secrets = ["team15"];
 
+	/// <summary>
+	/// Searches database for a track by given name
+	/// </summary>
+	/// <param name="name"></param>
+	/// <param name="date"></param>
+	/// <param name="location"></param>
+	/// <param name="theme"></param>
+	/// <returns></returns>
 	[HttpGet("FindOne")]
 	public ActionResult<Track> GetOne(string name, string date = "", string location = "", string theme = "")
 	{
 		if (Request.Headers.TryGetValue("Authorization", out var token))
 		{
+			var tokenstring = token.ToString().Remove(0, 7);
+
 			var decodedToken = JwtBuilder.Create()
 				.WithAlgorithm(new HMACSHA256Algorithm())
 				.WithSecret(secrets)
 				.MustVerifySignature()
-				.Decode<IDictionary<string, string>>(token);
+				.Decode<IDictionary<string, string>>(tokenstring);
 
 			bool a = decodedToken.TryGetValue("UserName", out string userName);
 			bool b = decodedToken.TryGetValue("UserRole", out string userRole);
@@ -42,16 +52,22 @@ public class TrackController(TrackService trackService) : ControllerBase
 
 	}
 
+	/// <summary>
+	/// Searches database for all tracks the user is authorized to see
+	/// </summary>
+	/// <returns></returns>
 	[HttpGet("FindMany")]
 	public ActionResult<IEnumerable<Track>> GetMany()
 	{
 		if (Request.Headers.TryGetValue("Authorization", out var token))
 		{
+			var tokenstring = token.ToString().Remove(0, 7);
+
 			var decodedToken = JwtBuilder.Create()
 				.WithAlgorithm(new HMACSHA256Algorithm())
 				.WithSecret(secrets)
 				.MustVerifySignature()
-				.Decode<IDictionary<string, string>>(token);
+				.Decode<IDictionary<string, string>>(tokenstring);
 
 			bool a = decodedToken.TryGetValue("UserName", out string userName);
 			bool b = decodedToken.TryGetValue("UserRole", out string userRole);
@@ -73,16 +89,23 @@ public class TrackController(TrackService trackService) : ControllerBase
 		return BadRequest();
 	}
 
+	/// <summary>
+	/// Inserts a track in the database
+	/// </summary>
+	/// <param name="track"></param>
+	/// <returns></returns>
 	[HttpPost(Name = "CreateTrack")]
 	public ActionResult<Track> Post(Track track)
 	{
 		if (Request.Headers.TryGetValue("Authorization", out var token))
 		{
+			var tokenstring = token.ToString().Remove(0, 7);
+
 			var decodedToken = JwtBuilder.Create()
 				.WithAlgorithm(new HMACSHA256Algorithm())
 				.WithSecret(secrets)
 				.MustVerifySignature()
-				.Decode<IDictionary<string, string>>(token);
+				.Decode<IDictionary<string, string>>(tokenstring);
 
 			bool a = decodedToken.TryGetValue("UserName", out string userName);
 			bool b = decodedToken.TryGetValue("UserRole", out string userRole);
@@ -100,16 +123,23 @@ public class TrackController(TrackService trackService) : ControllerBase
 		return BadRequest("AuthToken not found!");
 	}
 
+	/// <summary>
+	/// Updates a track in the database
+	/// </summary>
+	/// <param name="track"></param>
+	/// <returns></returns>
 	[HttpPut(Name = "UpdateTrack")]
 	public ActionResult Put(Track track)
 	{
 		if (Request.Headers.TryGetValue("Authorization", out var token))
 		{
+			var tokenstring = token.ToString().Remove(0, 7);
+
 			var decodedToken = JwtBuilder.Create()
 				.WithAlgorithm(new HMACSHA256Algorithm())
 				.WithSecret(secrets)
 				.MustVerifySignature()
-				.Decode<IDictionary<string, string>>(token);
+				.Decode<IDictionary<string, string>>(tokenstring);
 
 			bool a = decodedToken.TryGetValue("UserName", out string userName);
 			bool b = decodedToken.TryGetValue("UserRole", out string userRole);
@@ -131,16 +161,23 @@ public class TrackController(TrackService trackService) : ControllerBase
 		return BadRequest();
 	}
 
+	/// <summary>
+	/// Deletes a track in the database
+	/// </summary>
+	/// <param name="track"></param>
+	/// <returns></returns>
 	[HttpDelete(Name = "DeleteTrack")]
 	public ActionResult Delete(Track track)
 	{
 		if (Request.Headers.TryGetValue("Authorization", out var token))
 		{
+			var tokenstring = token.ToString().Remove(0, 7);
+
 			var decodedToken = JwtBuilder.Create()
 				.WithAlgorithm(new HMACSHA256Algorithm())
 				.WithSecret(secrets)
 				.MustVerifySignature()
-				.Decode<IDictionary<string, string>>(token);
+				.Decode<IDictionary<string, string>>(tokenstring);
 
 			bool a = decodedToken.TryGetValue("UserName", out string userName);
 			bool b = decodedToken.TryGetValue("UserRole", out string userRole);
